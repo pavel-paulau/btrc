@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import sys
-from pprint import pprint
+import json
 from optparse import OptionParser
 
 import requests
@@ -79,7 +79,7 @@ def main():
         filename = node.replace(':', '_') + ddoc.replace('/', '_') + '.json'
         with open(filename, 'w') as fh:
             print 'Saving btree stats to: ' + filename
-            pprint(stat, fh)
+            fh.write(json.dumps(stat, indent=4, sort_keys=True))
 
 
 if __name__ == '__main__':
