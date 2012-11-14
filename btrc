@@ -21,13 +21,17 @@ class CouchbaseClient(object):
         try:
             r = requests.get(url).json
         except requests.exceptions.ConnectionError:
-            sys.exit('Wrong hostname')
-        for node in r['nodes']:
-            hostname, port = node['hostname'].split(':')
-            if port == '8091':
-                yield hostname + ':8092'
-            else:
-                yield hostname + ':9500'
+            sys.exit(
+                'Cannot establish connection with specified [host:port] node')
+        if r is not None:
+            for node in r['nodes']:
+                hostname, port = node['hostname'].split(':')
+                if port == '8091':
+                    yield hostname + ':8092'
+                else:
+                    yield hostname + ':9500'
+        else:
+            sys.exit('Node has no buckets/misconfigured')
 
     def _get_list_of_ddocs(self):
         """Yield names of design documents in specified bucket"""
