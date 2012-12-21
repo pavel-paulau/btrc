@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='btrc',
-    version='1.2.1',
+    version='1.2.2',
     description='Couchbase view btree stats collector',
     author='Pavel Paulau',
     author_email='pavel.paulau@gmail.com',

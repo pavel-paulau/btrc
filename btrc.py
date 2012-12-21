@@ -19,7 +19,7 @@ class CouchbaseClient(object):
         """Yield CAPI host:port names"""
         url = self.base_url + '/pools/default/'
         try:
-            r = requests.get(url).json
+            r = requests.get(url).json()
         except requests.exceptions.ConnectionError:
             sys.exit(
                 'Cannot establish connection with specified [host:port] node')
@@ -37,7 +37,7 @@ class CouchbaseClient(object):
         """Yield names of design documents in specified bucket"""
         url = self.base_url + \
             '/pools/default/buckets/{0}/ddocs'.format(self.bucket)
-        r = requests.get(url).json
+        r = requests.get(url).json()
         if r is not None:
             return (row['doc']['meta']['id'] for row in r['rows'])
         else:
@@ -49,7 +49,7 @@ class CouchbaseClient(object):
             for ddoc in self._get_list_of_ddocs():
                 url = 'http://{0}'.format(node) + \
                     '/_set_view/{0}/{1}/_btree_stats'.format(self.bucket, ddoc)
-                yield node, ddoc, requests.get(url).json
+                yield node, ddoc, requests.get(url).json()
 
 
 class CliArgs(object):
