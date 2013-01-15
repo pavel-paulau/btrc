@@ -52,7 +52,7 @@ class CouchbaseClient(object):
                 yield node, ddoc, url
 
     def get_btree_stats(self):
-        """Yield view btree stats"""
+        """Yield btree stats"""
         for node, ddoc, url in self._gen_set_view_url():
             url += '_btree_stats'
             yield node, ddoc, requests.get(url).json()
