@@ -57,17 +57,17 @@ class CouchbaseClient(object):
             url += '_btree_stats'
             yield node, ddoc, requests.get(url).json()
 
-    def reset_utilization_stats(self):
-        """Reset all utilization stats"""
-        for _, _, url in self._gen_set_view_url():
-            url += '_reset_utilization_stats'
-            requests.post(url)
-
     def get_utilization_stats(self):
         """Yield utilization stats"""
         for node, ddoc, url in self._gen_set_view_url():
             url += '_get_utilization_stats'
             yield node, ddoc, requests.post(url).json()
+
+    def reset_utilization_stats(self):
+        """Reset all utilization stats"""
+        for _, _, url in self._gen_set_view_url():
+            url += '_reset_utilization_stats'
+            requests.post(url)
 
 
 class CliArgs(object):
