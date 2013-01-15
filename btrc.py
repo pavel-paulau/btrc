@@ -43,13 +43,31 @@ class CouchbaseClient(object):
         else:
             sys.exit('Wrong bucket name')
 
-    def get_btree_stats(self):
-        """Yield view btree stats"""
+    def _gen_set_view_url(self):
+        """Yield URLs for _set_view interface"""
         for node in self._get_list_of_nodes():
             for ddoc in self._get_list_of_ddocs():
-                url = 'http://{0}'.format(node) + \
-                    '/_set_view/{0}/{1}/_btree_stats'.format(self.bucket, ddoc)
-                yield node, ddoc, requests.get(url).json()
+                url = 'http://{0}'.format(node) +\
+                      '/_set_view/{0}/{1}/'.format(self.bucket, ddoc)
+                yield node, ddoc, url
+
+    def get_btree_stats(self):
+        """Yield view btree stats"""
+        for node, ddoc, url in self._gen_set_view_url():
+            url += '_btree_stats'
+            yield node, ddoc, requests.get(url).json()
+
+    def reset_utilization_stats(self):
+        """Reset all utilization stats"""
+        for _, _, url in self._gen_set_view_url():
+            url += '_reset_utilization_stats'
+            requests.post(url)
+
+    def get_utilization_stats(self):
+        """Yield utilization stats"""
+        for node, ddoc, url in self._gen_set_view_url():
+            url += '_get_utilization_stats'
+            yield node, ddoc, requests.post(url).json()
 
 
 class CliArgs(object):
