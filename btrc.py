@@ -89,7 +89,9 @@ class CliArgs(object):
                           help='Stats command', metavar='command')
 
         self.options, self.args = parser.parse_args()
+        self.validate_options(parser)
 
+    def validate_options(self, parser):
         if not self.options.node:
             parser.error('Missing node address [-n]')
         if not self.options.command:
