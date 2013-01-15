@@ -93,16 +93,25 @@ class CliArgs(object):
             sys.exit(1)
 
 
-def main():
+class StatsReporter():
     """Save all view btree stats to *.json files"""
+
+    def __init__(self, cb):
+        self.cb = cb
+
+    def report_btree_stats(self):
+        for node, ddoc, stat in self.cb.get_btree_stats():
+            filename = node.replace(':', '_') + ddoc.replace('/', '_') + '.json'
+            with open(filename, 'w') as fh:
+                print 'Saving btree stats to: ' + filename
+                fh.write(json.dumps(stat, indent=4, sort_keys=True))
+
+
+def main():
     ca = CliArgs()
     cb = CouchbaseClient(ca.options.node, ca.options.bucket)
-    for node, ddoc, stat in cb.get_btree_stats():
-        filename = node.replace(':', '_') + ddoc.replace('/', '_') + '.json'
-        with open(filename, 'w') as fh:
-            print 'Saving btree stats to: ' + filename
-            fh.write(json.dumps(stat, indent=4, sort_keys=True))
-
+    reporter = StatsReporter(cb)
+    reporter.report_btree_stats()
 
 if __name__ == '__main__':
     main()
