@@ -99,7 +99,7 @@ class CliArgs(object):
                          'commands supported')
 
 
-class StatsReporter():
+class StatsReporter(object):
     """Save all view btree stats to *.json files"""
 
     def __init__(self, cb):
