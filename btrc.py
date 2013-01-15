@@ -8,7 +8,7 @@ import requests
 
 class CouchbaseClient(object):
 
-    """Simplified couchbase client
+    """Minimal Couchbase client
     """
 
     def __init__(self, host_port, bucket):
@@ -102,7 +102,9 @@ class CliArgs(object):
 
 
 class StatsReporter(object):
-    """Save all view btree stats to *.json files"""
+
+    """Save all stats in *.json files
+    """
 
     def __init__(self, cb):
         self.cb = cb
@@ -126,6 +128,7 @@ def main():
     ca = CliArgs()
     cb = CouchbaseClient(ca.options.node, ca.options.bucket)
     reporter = StatsReporter(cb)
+
     if ca.options.command in ('btree_stats', 'util_stats'):
         reporter.report_stats(ca.options.command)
     elif ca.options.command == 'reset':
