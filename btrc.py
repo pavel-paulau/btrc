@@ -21,8 +21,8 @@ class CouchbaseClient(object):
         try:
             r = requests.get(url).json()
         except requests.exceptions.ConnectionError:
-            sys.exit(
-                'Cannot establish connection with specified [host:port] node')
+            sys.exit('Cannot establish connection with specified [host:port] '
+                     'node')
         if r is not None:
             for node in r['nodes']:
                 hostname, port = node['hostname'].split(':')
