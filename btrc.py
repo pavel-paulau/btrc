@@ -76,8 +76,8 @@ class CliArgs(object):
     """
 
     def __init__(self):
-        usage = 'usage: %prog -n node:port [-b bucket]\n\n' +\
-                'Example: %prog -n 127.0.0.1:8091 -b default'
+        usage = 'usage: %prog -n node:port [-b bucket] -c command \n\n' +\
+                'Example: %prog -n 127.0.0.1:8091 -b default -c btree_stats'
 
         parser = OptionParser(usage)
 
@@ -85,12 +85,18 @@ class CliArgs(object):
                           help='Node address', metavar='127.0.0.1:8091')
         parser.add_option('-b', dest='bucket', default='default',
                           help='Bucket name', metavar='default')
+        parser.add_option('-c', dest='command',
+                          help='Stats command', metavar='command')
 
         self.options, self.args = parser.parse_args()
 
         if not self.options.node:
-            parser.print_help()
-            sys.exit(1)
+            parser.error('Missing node address [-n]')
+        if not self.options.command:
+            parser.error('Missing command [-c]')
+        if self.options.command not in ('btree_stats', 'util_stats', 'reset'):
+            parser.error('Only "btree_stats", "util_stats" and "reset" '
+                         'commands supported')
 
 
 class StatsReporter():
@@ -99,11 +105,18 @@ class StatsReporter():
     def __init__(self, cb):
         self.cb = cb
 
-    def report_btree_stats(self):
-        for node, ddoc, stat in self.cb.get_btree_stats():
-            filename = node.replace(':', '_') + ddoc.replace('/', '_') + '.json'
+    def report_stats(self, stats_type):
+        if stats_type == 'btree_stats':
+            stats_generator = self.cb.get_btree_stats
+        else:
+            stats_generator = self.cb.get_utilization_stats
+
+        for node, ddoc, stat in stats_generator():
+            filename = '{0}_{1}{2}.json'.format(stats_type,
+                                                node.replace(':', '_'),
+                                                ddoc.replace('/', '_'))
             with open(filename, 'w') as fh:
-                print 'Saving btree stats to: ' + filename
+                print 'Saving {0} stats to: {1}'.format(stats_type, filename)
                 fh.write(json.dumps(stat, indent=4, sort_keys=True))
 
 
@@ -111,7 +124,10 @@ def main():
     ca = CliArgs()
     cb = CouchbaseClient(ca.options.node, ca.options.bucket)
     reporter = StatsReporter(cb)
-    reporter.report_btree_stats()
+    if ca.options.command in ('btree_stats', 'util_stats'):
+        reporter.report_stats(ca.options.command)
+    elif ca.options.command == 'reset':
+        cb.reset_utilization_stats()
 
 if __name__ == '__main__':
     main()
