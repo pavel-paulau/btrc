@@ -10,7 +10,7 @@ setup(
     entry_points={
         'console_scripts': ['btrc = btrc:main']
     },
-    install_requires=['requests'],
+    install_requires=['requests==1.1.0'],
     setup_requires=[],
     tests_require=[],
     classifiers=[
