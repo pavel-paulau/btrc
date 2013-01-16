@@ -2,8 +2,8 @@ from setuptools import setup
 
 setup(
     name='btrc',
-    version='2.0.0',
-    description='Couchbase view btree stats collector',
+    version='2.0.1',
+    description='Couchbase view stats collector',
     author='Pavel Paulau',
     author_email='pavel.paulau@gmail.com',
     py_modules = ['btrc'],
