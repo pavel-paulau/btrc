@@ -61,7 +61,7 @@ class CouchbaseClient(object):
         """Yield utilization stats"""
         for node, ddoc, url in self._gen_set_view_url():
             url += '_get_utilization_stats'
-            yield node, ddoc, requests.post(url).json()
+            yield node, ddoc, requests.get(url).json()
 
     def reset_utilization_stats(self):
         """Reset all utilization stats"""
