@@ -37,7 +37,10 @@ class CouchbaseClient(object):
         """Yield names of design documents in specified bucket"""
         url = self.base_url + \
             '/pools/default/buckets/{0}/ddocs'.format(self.bucket)
-        r = requests.get(url).json()
+        try:
+            r = requests.get(url).json()
+        except ValueError:
+            return []
         if r is not None:
             return (row['doc']['meta']['id'] for row in r['rows'])
         else:
@@ -47,7 +50,7 @@ class CouchbaseClient(object):
         """Yield URLs for _set_view interface"""
         for node in self._get_list_of_nodes():
             for ddoc in self._get_list_of_ddocs():
-                url = 'http://{0}'.format(node) +\
+                url = 'http://{0}'.format(node) + \
                       '/_set_view/{0}/{1}/'.format(self.bucket, ddoc)
                 yield node, ddoc, url
 
