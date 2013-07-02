@@ -4,6 +4,7 @@ import json
 from optparse import OptionParser
 
 import requests
+from logger import logger
 
 
 class CouchbaseClient(object):
@@ -123,7 +124,8 @@ class StatsReporter(object):
                                                 node.replace(':', '_'),
                                                 ddoc.replace('/', '_'))
             with open(filename, 'w') as fh:
-                print 'Saving {0} stats to: {1}'.format(stats_type, filename)
+                logger.info('Saving {0} stats to: {1}'.format(stats_type,
+                                                              filename))
                 fh.write(json.dumps(stat, indent=4, sort_keys=True))
 
 
