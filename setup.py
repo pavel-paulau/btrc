@@ -2,16 +2,16 @@ from setuptools import setup
 
 setup(
     name='btrc',
-    version='2.4',
+    version='2.5',
     description='Couchbase view stats collector',
     author='Pavel Paulau',
     author_email='pavel.paulau@gmail.com',
-    py_modules = ['btrc'],
+    py_modules=['btrc'],
     entry_points={
         'console_scripts': ['btrc = btrc:main']
     },
     install_requires=[
-        'logger'
+        'logger',
         'requests==1.2.0',
     ],
     setup_requires=[],
