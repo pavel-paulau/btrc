@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='btrc',
-    version='2.5',
+    version='3.0.1',
     description='Couchbase view stats collector',
     author='Pavel Paulau',
     author_email='pavel.paulau@gmail.com',

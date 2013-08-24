@@ -12,15 +12,16 @@ class CouchbaseClient(object):
     """Minimal Couchbase client
     """
 
-    def __init__(self, host_port, bucket):
+    def __init__(self, host_port, bucket, username, password):
         self.base_url = 'http://{0}'.format(host_port)
         self.bucket = bucket
+        self.auth = (username, password)
 
     def _get_list_of_nodes(self):
         """Yield CAPI host:port names"""
         url = self.base_url + '/pools/default/'
         try:
-            r = requests.get(url).json()
+            r = requests.get(url=url, auth=self.auth).json()
         except requests.exceptions.ConnectionError:
             sys.exit('Cannot establish connection with specified [host:port] '
                      'node')
@@ -39,7 +40,7 @@ class CouchbaseClient(object):
         url = self.base_url + \
             '/pools/default/buckets/{0}/ddocs'.format(self.bucket)
         try:
-            r = requests.get(url).json()
+            r = requests.get(url=url, auth=self.auth).json()
         except ValueError:
             return []
         if r is not None:
@@ -59,19 +60,19 @@ class CouchbaseClient(object):
         """Yield btree stats"""
         for node, ddoc, url in self._gen_set_view_url():
             url += '_btree_stats'
-            yield node, ddoc, requests.get(url).json()
+            yield node, ddoc, requests.get(url=url, auth=self.auth).json()
 
     def get_utilization_stats(self):
         """Yield utilization stats"""
         for node, ddoc, url in self._gen_set_view_url():
             url += '_get_utilization_stats'
-            yield node, ddoc, requests.get(url).json()
+            yield node, ddoc, requests.get(url=url, auth=self.auth).json()
 
     def reset_utilization_stats(self):
         """Reset all utilization stats"""
         for _, _, url in self._gen_set_view_url():
             url += '_reset_utilization_stats'
-            requests.post(url)
+            requests.post(url=url, auth=self.auth)
 
 
 class CliArgs(object):
@@ -81,12 +82,16 @@ class CliArgs(object):
 
     def __init__(self):
         usage = 'usage: %prog -n node:port [-b bucket] -c command \n\n' +\
-                'Example: %prog -n 127.0.0.1:8091 -b default -c btree_stats'
+                'Example: %prog -n 127.0.0.1:8091 -u Administrator -p password -b default -c btree_stats'
 
         parser = OptionParser(usage)
 
-        parser.add_option('-n', dest='node',
+        parser.add_option('-n', dest='host_port',
                           help='Node address', metavar='127.0.0.1:8091')
+        parser.add_option('-u', dest='username',
+                          help='REST username', metavar='Administrator')
+        parser.add_option('-p', dest='password',
+                          help='REST password', metavar='password')
         parser.add_option('-b', dest='bucket', default='default',
                           help='Bucket name', metavar='default')
         parser.add_option('-c', dest='command',
@@ -131,7 +136,8 @@ class StatsReporter(object):
 
 def main():
     ca = CliArgs()
-    cb = CouchbaseClient(ca.options.node, ca.options.bucket)
+    cb = CouchbaseClient(ca.options.host_port, ca.options.bucket,
+                         ca.options.username, ca.options.password)
     reporter = StatsReporter(cb)
 
     if ca.options.command in ('btree_stats', 'util_stats'):
