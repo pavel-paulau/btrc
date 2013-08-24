@@ -101,7 +101,7 @@ class CliArgs(object):
         self.validate_options(parser)
 
     def validate_options(self, parser):
-        if not self.options.node:
+        if not self.options.host_port:
             parser.error('Missing node address [-n]')
         if not self.options.command:
             parser.error('Missing command [-c]')
