@@ -17,66 +17,64 @@ class CouchbaseClient(object):
         self.bucket = bucket
         self.auth = (username, password)
 
-    def _get_list_of_nodes(self):
-        """Yield CAPI host:port names"""
-        url = self.base_url + '/pools/default/'
+    def safe_get(self, url):
         try:
-            r = requests.get(url=url, auth=self.auth).json()
-        except requests.exceptions.ConnectionError:
-            sys.exit('Cannot establish connection with specified [host:port] '
-                     'node')
-        if r is not None:
-            for node in r['nodes']:
+            return requests.get(url=url, auth=self.auth).json()
+        except (ValueError, requests.exceptions.ConnectionError) as e:
+            logger.warn(e)
+            return {}
+
+    def list_of_nodes(self):
+        url = self.base_url + '/pools/default/'
+        data = self.safe_get(url=url)
+
+        if data:
+            for node in data['nodes']:
                 hostname, port = node['hostname'].split(':')
                 if port == '8091':
                     yield hostname + ':8092'
                 else:
                     yield hostname + ':9500'
-        else:
+        elif data is None:
             sys.exit('Node has no buckets/misconfigured')
+        else:
+            sys.exit('Cannot establish connection with specified [host:port] '
+                     'node')
 
-    def _get_list_of_ddocs(self):
-        """Yield names of design documents in specified bucket"""
+    def list_of_ddocs(self):
         url = self.base_url + \
             '/pools/default/buckets/{0}/ddocs'.format(self.bucket)
-        try:
-            r = requests.get(url=url, auth=self.auth).json()
-        except ValueError:
-            return []
-        if r is not None:
-            return (row['doc']['meta']['id'] for row in r['rows'])
-        else:
+        data = self.safe_get(url=url)
+
+        if data:
+            for row in data['rows']:
+                yield row['doc']['meta']['id']
+        elif data is None:
             sys.exit('Wrong bucket name')
 
-    def _gen_set_view_url(self):
-        """Yield URLs for _set_view interface"""
-        for node in self._get_list_of_nodes():
-            for ddoc in self._get_list_of_ddocs():
+    def set_view_params(self):
+        for node in self.list_of_nodes():
+            for ddoc in self.list_of_ddocs():
                 url = 'http://{0}'.format(node) + \
                       '/_set_view/{0}/{1}/'.format(self.bucket, ddoc)
                 yield node, ddoc, url
 
     def get_btree_stats(self):
-        """Yield btree stats"""
-        for node, ddoc, url in self._gen_set_view_url():
+        for node, ddoc, url in self.set_view_params():
             url += '_btree_stats'
-            try:
-                yield node, ddoc, requests.get(url=url, auth=self.auth).json()
-            except requests.exceptions.ConnectionError as e:
-                logger.warn(e)
+            data = self.safe_get(url)
+            if data:
+                yield node, ddoc, data
 
     def get_utilization_stats(self):
-        """Yield utilization stats"""
-        for node, ddoc, url in self._gen_set_view_url():
+        for node, ddoc, url in self.set_view_params():
             url += '_get_utilization_stats'
-            try:
-                yield node, ddoc, requests.get(url=url, auth=self.auth).json()
-            except requests.exceptions.ConnectionError as e:
-                logger.warn(e)
+            data = self.safe_get(url)
+            if data:
+                yield node, ddoc, data
 
     def reset_utilization_stats(self):
-        """Reset all utilization stats"""
-        for _, _, url in self._gen_set_view_url():
+        for _, _, url in self.set_view_params():
             url += '_reset_utilization_stats'
             requests.post(url=url, auth=self.auth)
 
@@ -88,7 +86,8 @@ class CliArgs(object):
 
     def __init__(self):
         usage = 'usage: %prog -n node:port [-b bucket] -c command \n\n' +\
-                'Example: %prog -n 127.0.0.1:8091 -u Administrator -p password -b default -c btree_stats'
+                'Example: %prog -n 127.0.0.1:8091 ' +\
+                '-u Administrator -p password -b default -c btree_stats'
 
         parser = OptionParser(usage)
 
